@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { DataTable } from "primereact/datatable";
+import { DataTable, type DataTablePageEvent } from "primereact/datatable";
 import { Column } from "primereact/column";
 import axios from "axios";
 import { OverlayPanel } from "primereact/overlaypanel";
@@ -14,14 +14,18 @@ interface Data {
   date_end?: number;
 }
 
+interface PaginationParams {
+  total: number;
+}
+
 export const Table: React.FC = () => {
   const [data, setData] = useState<Data[]>([]);
-  const [selectedData, setSelectedData] = useState([]);
+  const [selectedData, setSelectedData] = useState<Data[]>([]);
   const [selectValue, setSelectValue] = useState<number>(0);
   const [pageNum, setPageNum] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
-  const [pagination, setPagination] = useState({});
-  const panel = useRef(null);
+  const [pagination, setPagination] = useState<PaginationParams | null>(null);
+  const panel = useRef<OverlayPanel | null>(null);
 
   const fetchData = useCallback(async (page: number = 1) => {
     try {
@@ -61,8 +65,8 @@ export const Table: React.FC = () => {
   }, []);
 
   // Handler Functions
-  const handleSelectRows = async (e) => {
-    panel.current.toggle(e);
+  const handleSelectRows = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    panel.current?.toggle(e);
     let rowsNeeded = selectValue;
     let selectedRows: Data[] = [];
 
@@ -83,8 +87,8 @@ export const Table: React.FC = () => {
     setLoading(false);
   };
 
-  const handleClearSelection = (e) => {
-    panel.current.toggle(e);
+  const handleClearSelection = (e: React.MouseEvent<HTMLButtonElement>) => {
+    panel.current?.toggle(e);
     setSelectValue(0);
     setSelectedData([]);
   };
@@ -99,9 +103,9 @@ export const Table: React.FC = () => {
         loading={loading}
         first={pageNum}
         lazy
-        onPage={(e) => {
+        onPage={(e: DataTablePageEvent) => {
           setPageNum(e?.first);
-          fetchData(e?.page + 1);
+          fetchData((e.page ?? 0) + 1);
         }}
         stripedRows
         selectionMode={"multiple"}
@@ -121,7 +125,7 @@ export const Table: React.FC = () => {
           header={
             <i
               className="pi pi-chevron-down"
-              onClick={(e) => panel.current.toggle(e)}
+              onClick={(e) => panel.current?.toggle(e)}
               style={{ fontSize: "1rem", cursor: "pointer" }}
             ></i>
           }
