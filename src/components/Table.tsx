@@ -45,11 +45,11 @@ export const Table: React.FC = () => {
   }, []);
 
   // Utility Function
-  const fetchPage = useCallback(async (page: number = 1) => {
+  const fetchPage = useCallback(async (limit: number = 100) => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `https://api.artic.edu/api/v1/artworks?page=${page}`
+        `https://api.artic.edu/api/v1/artworks?limit=${limit}`
       );
 
       if (res.data) {
@@ -67,23 +67,12 @@ export const Table: React.FC = () => {
   // Handler Functions
   const handleSelectRows = async (e: React.MouseEvent<HTMLButtonElement>) => {
     panel.current?.toggle(e);
-    let rowsNeeded = selectValue;
-    let selectedRows: Data[] = [];
 
-    let currentPage = 1;
+    const safeValue = Math.min(selectValue, 100);
 
-    while (rowsNeeded > 0) {
-      const pageData = await fetchPage(currentPage);
+    const pageData = await fetchPage(safeValue);
 
-      const minimum = Math.min(rowsNeeded, pageData.length);
-
-      selectedRows = [...selectedRows, ...pageData.slice(0, minimum)];
-
-      rowsNeeded -= minimum;
-      currentPage++;
-    }
-
-    setSelectedData(selectedRows);
+    setSelectedData((prev) => [...prev, ...pageData]);
     setLoading(false);
   };
 
@@ -147,6 +136,7 @@ export const Table: React.FC = () => {
           <input
             type="number"
             value={selectValue}
+            max={100}
             onChange={(e) => setSelectValue(Number(e.target.value))}
             placeholder="Select Rows"
             style={{
